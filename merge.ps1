@@ -1,31 +1,25 @@
 Class ExcelWorkBooks
 {
     
-    [array]$workbooks = {}; #AllWB
     [__ComObject]$application;
     [__ComObject]$workbook;
 
     # error (string for format on Write-Error)
-    [void] error ([string]$text, [boolean]$saveDoc) 
+    hidden [void] error ([string]$text, [switch]$saveDoc) 
     {
         [string]$line = '-' * $text.length; 
         
-        Write-Host "$line `n$text `n$line";
+        Write-Warning "$line `n$text `n$line";
         $this.Quit($saveDoc);
         exit 1;
     }
 
     # close Document and Quit Application.
-    [void] Quit($Save) 
+    [void] Quit($save) 
     {
         if ($this.workbook -ne $null) 
         {
-            for ($n=1; $n -ne $this.workbooks.Count; $n++) 
-            {
-                
-                [__ComObject]$WB = $this.workbooks[$n];
-                $WB.Close();
-            }
+            $this.workbook.Close($save);
         }
         
         $this.application.Quit();
@@ -33,7 +27,7 @@ Class ExcelWorkBooks
     }
 
     # Add WorkBook .
-    [object] Add([string]$path, [boolean]$Exists) 
+    [object] Add([string]$path, [switch]$Exists) 
     {
         if ($Exists) 
         {
@@ -45,7 +39,6 @@ Class ExcelWorkBooks
             $WB.SaveAs($path);
         }
         
-        $this.workbooks += $WB;
         $this.workbook   = $WB;
 
         return $WB;
@@ -53,7 +46,7 @@ Class ExcelWorkBooks
     }
 
     # if path exists open WB
-    [object] OpenWorkBookIfExists([string]$path) 
+    hidden [object] OpenWorkBookIfExists([string]$path) 
     {        
         $exists = Get-Childitem $path;
 
@@ -68,7 +61,7 @@ Class ExcelWorkBooks
     }
 
     # Comobj create
-    [object] createExcelApplication ([boolean]$visible)
+    hidden [object] createExcelApplication ([switch]$visible)
     {
         [__ComObject]$excel = New-Object -ComObject Excel.Application;
         $excel.visible = $visible;
@@ -77,7 +70,7 @@ Class ExcelWorkBooks
     }
 
     # __init__ ([path of excel file], [create file if not exist], [made application visible or not])
-    ExcelWorkBooks ([string]$path, [boolean]$create, [boolean]$visible) 
+    hidden ExcelWorkBooks ([string]$path, [switch]$create, [switch]$visible) 
     {
         $this.application = $this.createExcelApplication($visible);
         
@@ -92,6 +85,5 @@ Class ExcelWorkBooks
     }
 }
 
-#$test = [ExcelWorkBooks]::new("C:\projects\forJob\dataMerge\test0.csv", $false, $false);
-#$test.Add("C:\projects\forJob\dataMerge\test1.csv", $true)
+#$test = [ExcelWorkBooks]::new(".\test0.csv", $false, $false);
 #$test.Quit($false)
